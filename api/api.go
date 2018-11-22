@@ -5,6 +5,7 @@ import (
 	"crypto/md5"
 	"encoding/json"
 	"errors"
+	"strings"
 	//"errors"
 	//	"log"
 	//"io/ioutil"
@@ -32,19 +33,24 @@ func NewSessionData(key string, secret string) SessionData {
 	return SessionData{key, secret}
 }
 
+type ErrorResponse struct {
+	ErrorCode int    `json:"error_code,omitempty"`
+	ErrorMsg  string `json:"error_msg,omitempty"`
+}
+
 type User struct {
 	Uid       string `json:"uid,omitempty"`
 	FirstName string `json:"first_name,omitempty"`
 	LastName  string `json:"last_name,omitempty"`
 	PicBase   string `json:"pic_base,omitempty"`
-	ErrorCode int    `json:"error_code,omitempty"`
-	ErrorMsg  string `json:"error_msg,omitempty"`
+	//ErrorCode int    `json:"error_code,omitempty"`
+	//ErrorMsg  string `json:"error_msg,omitempty"`
 }
 
 type Friends struct {
-	Uids      []string `json:"uids,omitempty"`
-	ErrorCode int      `json:"error_code,omitempty"`
-	ErrorMsg  string   `json:"error_msg,omitempty"`
+	Uids []string `json:"uids,omitempty"`
+	//ErrorCode int      `json:"error_code,omitempty"`
+	//ErrorMsg  string   `json:"error_msg,omitempty"`
 }
 
 //func NewApi(AppId ) Api {
@@ -100,7 +106,12 @@ func (api *Api) apiRequest(session SessionData, params map[string]string, obj in
 	//log.Println(bodyString)
 
 	decoder := json.NewDecoder(res.Body)
-	decoder.Decode(obj)
+	if err := decoder.Decode(obj); err != nil {
+		errResponse := &ErrorResponse{}
+		if err := decoder.Decode(errResponse); err != nil {
+			return errors.New(fmt.Sprintf("%d,%s", errResponse.ErrorCode, errResponse.ErrorMsg))
+		}
+	}
 	return err
 }
 
@@ -111,25 +122,27 @@ func (api *Api) Auth(data SessionData) (User, error) {
 	params["format"] = "json"
 	params["method"] = "users.getCurrentUser"
 	err := api.apiRequest(data, params, &user)
-	if err == nil {
-		if user.ErrorCode > 0 {
-			err = errors.New(fmt.Sprintf("%d,%s", user.ErrorCode, user.ErrorMsg))
-		}
-	}
 	return user, err
 }
 
-func (api *Api) Friends(data SessionData) (Friends, error) {
+func (api *Api) Friends(data SessionData) ([]User, error) {
 	friends := Friends{}
-	params := make(map[string]string)
-	params["application_key"] = api.AppId
-	params["format"] = "json"
-	params["method"] = "friends.getAppUsers"
-	err := api.apiRequest(data, params, &friends)
-	if err == nil {
-		if friends.ErrorCode > 0 {
-			err = errors.New(fmt.Sprintf("%d,%s", friends.ErrorCode, friends.ErrorMsg))
-		}
+	if err := api.apiRequest(data, map[string]string{
+		"applicationKey": api.AppId,
+		"format":         "json",
+		"method":         "friends.getAppUsers",
+	}, &friends); err != nil {
+		return nil, err
 	}
-	return friends, err
+	users := make([]User, len(friends.Uids), len(friends.Uids))
+	if err := api.apiRequest(data, map[string]string{
+		"applicationKey": api.AppId,
+		"uids":           strings.Join(friends.Uids, ","),
+		"format":         "json",
+		"method":         "users.getInfo",
+	}, &friends); err != nil {
+		return nil, err
+	}
+	return users, nil
+
 }
