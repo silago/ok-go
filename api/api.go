@@ -5,6 +5,7 @@ import (
 	"crypto/md5"
 	"encoding/json"
 	"errors"
+	"log"
 	"strings"
 	//"errors"
 	//	"log"
@@ -134,6 +135,7 @@ func (api *Api) Friends(data SessionData) ([]User, error) {
 	}, &friends); err != nil {
 		return nil, err
 	}
+	log.Printf("uids", friends.Uids)
 	users := make([]User, len(friends.Uids), len(friends.Uids))
 	if err := api.apiRequest(data, map[string]string{
 		"applicationKey": api.AppId,
@@ -141,8 +143,10 @@ func (api *Api) Friends(data SessionData) ([]User, error) {
 		"format":         "json",
 		"method":         "users.getInfo",
 	}, &friends); err != nil {
+		log.Printf("users", users)
 		return nil, err
 	}
+	log.Printf("users", users)
 	return users, nil
 
 }
