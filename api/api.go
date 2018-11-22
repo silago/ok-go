@@ -122,6 +122,7 @@ func (api *Api) Auth(data SessionData) (User, error) {
 	params["application_key"] = api.AppId
 	params["format"] = "json"
 	params["method"] = "users.getCurrentUser"
+	params["fields"] = "uid,first_name,last_name,pic_base"
 	err := api.apiRequest(data, params, &user)
 	return user, err
 }
@@ -141,6 +142,7 @@ func (api *Api) Friends(data SessionData) ([]User, error) {
 		"application_key": api.AppId,
 		"uids":            strings.Join(friends.Uids, ","),
 		"format":          "json",
+		"fields":          "uid,first_name,last_name,pic_base",
 		"method":          "users.getInfo",
 	}, &friends); err != nil {
 		log.Printf("users", users)
