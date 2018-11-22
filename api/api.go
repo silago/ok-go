@@ -41,6 +41,12 @@ type User struct {
 	ErrorMsg  string `json:"error_msg,omitempty"`
 }
 
+type Friends struct {
+	Uids      []string `json:"uids,omitempty"`
+	ErrorCode int      `json:"error_code,omitempty"`
+	ErrorMsg  string   `json:"error_msg,omitempty"`
+}
+
 //func NewApi(AppId ) Api {
 //    return Api{
 //
@@ -65,9 +71,8 @@ func (api *Api) makeSig(session SessionData, params map[string]string) string {
 	return fmt.Sprintf("%x", h.Sum(nil))
 }
 
-func (api *Api) apiRequest(session SessionData, params map[string]string) (User, error) {
+func (api *Api) apiRequest(session SessionData, params map[string]string, obj interface{}) error {
 	u := url.URL{}
-	user := User{}
 
 	u.Scheme = "http"
 	u.Path = PATH
@@ -87,7 +92,7 @@ func (api *Api) apiRequest(session SessionData, params map[string]string) (User,
 	fmt.Println("u:: ", u.String())
 	res, err := httpClient.Get(u.String())
 	if err != nil {
-		return user, err
+		return err
 	}
 
 	//bodyBytes, _ := ioutil.ReadAll(res.Body)
@@ -95,22 +100,36 @@ func (api *Api) apiRequest(session SessionData, params map[string]string) (User,
 	//log.Println(bodyString)
 
 	decoder := json.NewDecoder(res.Body)
-	if err = decoder.Decode(&user); err != nil {
-		return user, err
-	}
-	if user.ErrorCode > 0 {
-		err = errors.New(fmt.Sprintf("%d,%s", user.ErrorCode, user.ErrorMsg))
-	} else {
-		err = nil
-	}
-	return user, err
+	decoder.Decode(obj)
+	return err
 }
 
 func (api *Api) Auth(data SessionData) (User, error) {
+	user := User{}
 	params := make(map[string]string)
 	params["application_key"] = api.AppId
 	params["format"] = "json"
 	params["method"] = "users.getCurrentUser"
-	user, err := api.apiRequest(data, params)
+	err := api.apiRequest(data, params, &user)
+	if err == nil {
+		if user.ErrorCode > 0 {
+			err = errors.New(fmt.Sprintf("%d,%s", user.ErrorCode, user.ErrorMsg))
+		}
+	}
 	return user, err
+}
+
+func (api *Api) Friends(data SessionData) (Friends, error) {
+	friends := Friends{}
+	params := make(map[string]string)
+	params["application_key"] = api.AppId
+	params["format"] = "json"
+	params["method"] = "users.getCurrentUser"
+	err := api.apiRequest(data, params, &friends)
+	if err == nil {
+		if friends.ErrorCode > 0 {
+			err = errors.New(fmt.Sprintf("%d,%s", friends.ErrorCode, friends.ErrorMsg))
+		}
+	}
+	return friends, err
 }
