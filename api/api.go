@@ -124,7 +124,7 @@ func (api *Api) Friends(data SessionData) (Friends, error) {
 	params := make(map[string]string)
 	params["application_key"] = api.AppId
 	params["format"] = "json"
-	params["method"] = "users.getCurrentUser"
+	params["method"] = "friends.getAppUsers"
 	err := api.apiRequest(data, params, &friends)
 	if err == nil {
 		if friends.ErrorCode > 0 {
