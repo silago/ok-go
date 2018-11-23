@@ -138,19 +138,16 @@ func (api *Api) FriendsData(data SessionData) ([]User, error) {
 	}
 	log.Printf("uids", friends.Uids)
 	users := make([]User, len(friends.Uids), len(friends.Uids))
-	if err := api.apiRequest(data, map[string]string{
+	err := api.apiRequest(data, map[string]string{
 		"application_key": api.AppId,
 		"uids":            strings.Join(friends.Uids, ","),
 		"format":          "json",
 		"fields":          "uid,first_name,last_name,pic_base",
 		"method":          "users.getInfo",
-	}, &friends); err != nil {
-		log.Printf("users", users)
-		return nil, err
-	}
-	log.Printf("users", users)
-	return users, nil
+	}, &friends)
 
+	return users, err
+}
 
 func (api *Api) Friends(data SessionData) ([]string, error) {
 	friends := Friends{}
@@ -159,5 +156,5 @@ func (api *Api) Friends(data SessionData) ([]string, error) {
 		"format":          "json",
 		"method":          "friends.getAppUsers",
 	}, &friends)
-    return friends.Uids, nil
+	return friends.Uids, err
 }
