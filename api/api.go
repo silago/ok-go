@@ -127,7 +127,7 @@ func (api *Api) Auth(data SessionData) (User, error) {
 	return user, err
 }
 
-func (api *Api) Friends(data SessionData) ([]User, error) {
+func (api *Api) FriendsData(data SessionData) ([]User, error) {
 	friends := Friends{}
 	if err := api.apiRequest(data, map[string]string{
 		"application_key": api.AppId,
@@ -151,4 +151,13 @@ func (api *Api) Friends(data SessionData) ([]User, error) {
 	log.Printf("users", users)
 	return users, nil
 
+
+func (api *Api) Friends(data SessionData) ([]string, error) {
+	friends := Friends{}
+	err := api.apiRequest(data, map[string]string{
+		"application_key": api.AppId,
+		"format":          "json",
+		"method":          "friends.getAppUsers",
+	}, &friends)
+    return friends.Uids, nil
 }
