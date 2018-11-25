@@ -109,10 +109,13 @@ func (api *Api) apiRequest(session SessionData, params map[string]string, obj in
 	decoder := json.NewDecoder(res.Body)
 	if err := decoder.Decode(obj); err != nil {
 		errResponse := &ErrorResponse{}
-		if err := decoder.Decode(errResponse); err != nil {
+		if err := decoder.Decode(errResponse); err == nil {
 			return errors.New(fmt.Sprintf("%d,%s", errResponse.ErrorCode, errResponse.ErrorMsg))
+		} else {
+			return err
 		}
 	}
+	log.Println("obj: ", obj)
 	return err
 }
 
