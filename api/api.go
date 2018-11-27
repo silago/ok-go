@@ -96,7 +96,7 @@ func (api *Api) apiRequest(session SessionData, params map[string]string, obj in
 	u.RawQuery = query.Encode()
 
 	httpClient := &http.Client{}
-	fmt.Println("u:: ", u.String())
+	log.Println("u:: ", u.String())
 	res, err := httpClient.Get(u.String())
 	if err != nil {
 		return err
